@@ -1,0 +1,89 @@
+﻿FUNCTION_BLOCK "dcf77_decode"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      in : Bool;
+   END_VAR
+
+   VAR_OUTPUT 
+      datetime {OriginalPartName := 'DTL'; LibVersion := '1.0'} : DTL;
+      sync : Bool;
+   END_VAR
+
+   VAR 
+      data : Array[0..58] of Bool;
+      i : Int;
+      pausetime { S7_HMI_Accessible := 'False'; S7_HMI_Visible := 'False'} : Time;
+      pulsetime { S7_HMI_Accessible := 'False'; S7_HMI_Visible := 'False'} : Time;
+      "dt" {OriginalPartName := 'DTL'; LibVersion := '1.0'} : DTL;
+      time_since_sync : Time;
+   END_VAR
+
+   VAR_TEMP 
+      rising_edge : Bool;
+      falling_edge : Bool;
+      current_bit : Bool;
+      test : Int;
+      temp_dt {OriginalPartName := 'DTL'; LibVersion := '1.0'} : DTL;
+      temp_valid : Bool;
+      resynced : Bool;
+   END_VAR
+
+
+BEGIN
+	"R_TRIG_DB"(CLK := #in,
+	            Q => #rising_edge);
+	"F_TRIG_DB"(CLK := #in,
+	            Q => #falling_edge);
+	
+	
+	IF #pausetime > T#1500ms AND #falling_edge THEN
+	    #i := 0;
+	END_IF;
+	IF #rising_edge THEN
+	    IF #pulsetime < T#150ms THEN
+	        #current_bit := false;
+	    ELSE
+	        #current_bit := true;
+	    END_IF;
+	    
+	    #data[#i] := #current_bit;
+	    
+	    IF #i < 58 THEN
+	        #i := #i + 1;
+	    ELSE
+	        #i := 0;
+	        
+	        "dcf77_decoder"(data:=#data,
+	                        datetime=>#temp_dt,
+	                        valid=>#temp_valid);
+	        IF #temp_valid THEN
+	            #dt := #temp_dt;
+	            #datetime := #dt;
+	            #sync := true;
+	            #resynced := true;
+	        END_IF;
+	    END_IF;
+	END_IF;
+	
+	IF #sync THEN
+	    "IEC_Timer_0_DB_2".TONR(IN:=true,
+	                            R:= #resynced,
+	                            PT:= t#24d,
+	                            ET=>#time_since_sync);
+	    #resynced := false;
+	    
+	    #datetime := T_ADD(IN1:=#dt, IN2:=#time_since_sync);
+	END_IF;
+	
+	"IEC_Timer_0_DB".TONR(IN:=NOT #in,
+	                      R:=#falling_edge,
+	                      PT:=T#3000ms,
+	                      ET=>#pausetime);
+	"IEC_Timer_0_DB_1".TONR(IN:=#in,
+	                        R:=#rising_edge,
+	                        PT:=T#500ms,
+	                        ET=>#pulsetime);
+	
+END_FUNCTION_BLOCK
+

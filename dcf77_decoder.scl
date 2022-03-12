@@ -1,0 +1,61 @@
+﻿FUNCTION "dcf77_decoder" : Void
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      data : Array[0..58] of Bool;
+   END_VAR
+
+   VAR_OUTPUT 
+      datetime {OriginalPartName := 'DTL'; LibVersion := '1.0'} : DTL;
+      valid : Bool;
+   END_VAR
+
+   VAR_TEMP 
+      oddcheck1 : Int;
+      oddcheck2 : Int;
+      oddcheck3 : Int;
+      tmp : Int;
+      testdata : String;
+      i : Int;
+   END_VAR
+
+
+BEGIN
+	(*
+	#testdata := '01011111111111000100100101000101010101000011100001011010000';
+	FOR #i := 0 TO 58 DO
+	    #data[#i] := INT_TO_BOOL(STRING_TO_INT(MID(IN:=#testdata, L:=1, P:=#i+1)));
+	END_FOR;
+	*)
+	
+	
+	
+	#oddcheck1 := BOOL_TO_INT(#data[21]) + BOOL_TO_INT(#data[22]) + BOOL_TO_INT(#data[23]) + BOOL_TO_INT(#data[24]) + BOOL_TO_INT(#data[25]) + BOOL_TO_INT(#data[26]) + BOOL_TO_INT(#data[27]);
+	#oddcheck2 := BOOL_TO_INT(#data[29]) + BOOL_TO_INT(#data[30]) + BOOL_TO_INT(#data[31]) + BOOL_TO_INT(#data[32]) + BOOL_TO_INT(#data[33]) + BOOL_TO_INT(#data[34]);
+	#oddcheck3 := BOOL_TO_INT(#data[36]) + BOOL_TO_INT(#data[37]) + BOOL_TO_INT(#data[38]) + BOOL_TO_INT(#data[39]) + BOOL_TO_INT(#data[40]) + BOOL_TO_INT(#data[41]) + BOOL_TO_INT(#data[42]) + BOOL_TO_INT(#data[43]) + BOOL_TO_INT(#data[44]) + BOOL_TO_INT(#data[45]) + BOOL_TO_INT(#data[46]) + BOOL_TO_INT(#data[47]) + BOOL_TO_INT(#data[48]) + BOOL_TO_INT(#data[49]) + BOOL_TO_INT(#data[50]) + BOOL_TO_INT(#data[51]) + BOOL_TO_INT(#data[52]) + BOOL_TO_INT(#data[53]) + BOOL_TO_INT(#data[54]) + BOOL_TO_INT(#data[55]) + BOOL_TO_INT(#data[56]) + BOOL_TO_INT(#data[57]);
+	
+	#valid := false;
+	IF BOOL_TO_INT(#data[028]) = 0 THEN
+	    IF BOOL_TO_INT(#data[28]) = (#oddcheck1 MOD 2) THEN
+	        IF BOOL_TO_INT(#data[35]) = (#oddcheck2 MOD 2) THEN
+	            IF BOOL_TO_INT(#data[58]) = (#oddcheck3 MOD 2) THEN
+	                #valid := true;
+	            END_IF;
+	        END_IF;
+	    END_IF;
+	END_IF;
+	
+	#datetime.SECOND := 0;
+	#tmp := BOOL_TO_INT(#data[21]) * 1 + BOOL_TO_INT(#data[22]) * 2 + BOOL_TO_INT(#data[23]) * 4 + BOOL_TO_INT(#data[24]) * 8 + BOOL_TO_INT(#data[25]) * 10 + BOOL_TO_INT(#data[26]) * 20 + BOOL_TO_INT(#data[27]) * 40;
+	#datetime.MINUTE := INT_TO_USINT(#tmp);
+	#tmp := BOOL_TO_INT(#data[29]) * 1 + BOOL_TO_INT(#data[30]) * 2 + BOOL_TO_INT(#data[31]) * 4 + BOOL_TO_INT(#data[32]) * 8 + BOOL_TO_INT(#data[33]) * 10 + BOOL_TO_INT(#data[34]) * 20;
+	#datetime.HOUR := INT_TO_USINT(#tmp);
+	#tmp := BOOL_TO_INT(#data[36]) * 1 + BOOL_TO_INT(#data[37]) * 2 + BOOL_TO_INT(#data[38]) * 4 + BOOL_TO_INT(#data[39]) * 8 + BOOL_TO_INT(#data[40]) * 10 + BOOL_TO_INT(#data[41]) * 20;
+	#datetime.DAY := INT_TO_USINT(#tmp);
+	#tmp := BOOL_TO_INT(#data[45]) * 1 + BOOL_TO_INT(#data[46]) * 2 + BOOL_TO_INT(#data[47]) * 4 + BOOL_TO_INT(#data[48]) * 8 + BOOL_TO_INT(#data[49]) * 10;
+	#datetime.MONTH := INT_TO_USINT(#tmp);
+	#tmp := BOOL_TO_INT(#data[50]) * 1 + BOOL_TO_INT(#data[51]) * 2 + BOOL_TO_INT(#data[52]) * 4 + BOOL_TO_INT(#data[53]) * 8 + BOOL_TO_INT(#data[54]) * 10 + BOOL_TO_INT(#data[55]) * 20 + BOOL_TO_INT(#data[56]) * 40 + BOOL_TO_INT(#data[57]) * 80;
+	#datetime.YEAR := UInt#2000 + INT_TO_USINT(#tmp);
+	
+END_FUNCTION
+
